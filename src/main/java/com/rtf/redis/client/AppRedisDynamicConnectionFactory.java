@@ -42,7 +42,7 @@ public class AppRedisDynamicConnectionFactory
 
     private RedisProperties properties ;
 
-    private final List<AppCodisConnectionFactory> connectionFactories = Lists.newArrayList() ;
+    private final List<AppRedisConnectionFactory> connectionFactories = Lists.newArrayList() ;
 
     private LettuceClientConfiguration clientConfig ;
 
@@ -54,9 +54,14 @@ public class AppRedisDynamicConnectionFactory
 
     private AppRedisRoundRobinRule appRedisRoundRobinRule ;
 
-    public AppRedisDynamicConnectionFactory(RedisProperties properties ,
+    private String redisServerType = "redis" ;
+
+    public AppRedisDynamicConnectionFactory(String type , RedisProperties properties ,
                                             LettuceClientConfiguration clientConfig ,
                                             AppRedisHostList initAppRedisHostList){
+
+        this.redisServerType = type ;
+
         this.properties = properties ;
 
         this.clientConfig = clientConfig ;
@@ -163,13 +168,13 @@ public class AppRedisDynamicConnectionFactory
                     continue;
                 }
                 log.debug("初始化redis连接: {}" , host);
-                AppCodisConnectionFactory connectionFactory = buildConnectionFactory( host , clientConfig ,
+                AppRedisConnectionFactory connectionFactory = buildConnectionFactory( host , clientConfig ,
                         masterHosts!=null && masterHosts.contains( host ) ) ;
                 connectionFactories.add( connectionFactory ) ;
             }
             // 找出无用的redis连接
-            List<AppCodisConnectionFactory> removeAppLettuceConnectionFactory = Lists.newArrayList() ;
-            for (AppCodisConnectionFactory connectionFactory : connectionFactories) {
+            List<AppRedisConnectionFactory> removeAppLettuceConnectionFactory = Lists.newArrayList() ;
+            for (AppRedisConnectionFactory connectionFactory : connectionFactories) {
                 if( hosts.contains( connectionFactory.getHostName() ) ){
                     continue;
                 }
@@ -194,7 +199,7 @@ public class AppRedisDynamicConnectionFactory
      * @return
      */
     protected boolean hasConnectionFactory( String host ){
-        for (AppCodisConnectionFactory factory : connectionFactories) {
+        for (AppRedisConnectionFactory factory : connectionFactories) {
             if(StringUtils.equalsIgnoreCase( factory.getHostName(), host )){
                 return true ;
             }
@@ -208,10 +213,10 @@ public class AppRedisDynamicConnectionFactory
      * @param clientConfig
      * @return
      */
-    protected AppCodisConnectionFactory buildConnectionFactory(String host,
+    protected AppRedisConnectionFactory buildConnectionFactory(String host,
                                                                LettuceClientConfiguration clientConfig ,
                                                                boolean isMaster){
-        AppCodisConnectionFactory connectionFactory = new AppCodisConnectionFactory(
+        AppRedisConnectionFactory connectionFactory = new AppRedisConnectionFactory( redisServerType ,
                 getStandaloneConfig(host) , clientConfig ) ;
 
         // 开启动态节点的健康检查
@@ -228,11 +233,11 @@ public class AppRedisDynamicConnectionFactory
      * 销毁redis连接工厂
      * @param destroyConnectionFactories
      */
-    protected void destroy(List<AppCodisConnectionFactory> destroyConnectionFactories){
+    protected void destroy(List<AppRedisConnectionFactory> destroyConnectionFactories){
         if( destroyConnectionFactories==null || destroyConnectionFactories.size()<1 ){
             return;
         }
-        for (AppCodisConnectionFactory destroyConnectionFactory : destroyConnectionFactories) {
+        for (AppRedisConnectionFactory destroyConnectionFactory : destroyConnectionFactories) {
             String hostName = destroyConnectionFactory.getHostName() ;
             try{
                 log.debug("销毁redis连接池: {}" , hostName);
@@ -270,7 +275,7 @@ public class AppRedisDynamicConnectionFactory
      * @return
      */
     public RedisConnection getUpConnection(){
-        AppCodisConnectionFactory appCodisConnectionFactory = appRedisRoundRobinRule.choose(  null ) ;
+        AppRedisConnectionFactory appCodisConnectionFactory = appRedisRoundRobinRule.choose(  null ) ;
         if( appCodisConnectionFactory==null ){
             return null ;
         }

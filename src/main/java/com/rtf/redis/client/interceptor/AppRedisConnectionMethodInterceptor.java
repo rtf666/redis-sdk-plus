@@ -1,4 +1,4 @@
-package com.rtf.redis.client;
+package com.rtf.redis.client.interceptor;
 
 import com.rtf.redis.client.lb.AppRedisCircuitBreaker;
 import com.google.common.base.Joiner;
@@ -23,15 +23,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AppRedisConnectionMethodInterceptor implements MethodInterceptor {
 
-    /**
-     * 不支持的redis方法
-     */
-    public static final Set<String> UN_SUPPORT_METHODS = Sets.newHashSet(
-            "setConfig" , "getConfig" , "configGet" ,
-            "rename" , "renameNX" ,
-            "bLPop" , "bRPop" , "bRPopLPush" , "getSubscription" ,
-            "publish" , "subscribe" , "pSubscribe" ) ;
-
     @Setter
     @Getter
     private String host ;
@@ -51,11 +42,6 @@ public class AppRedisConnectionMethodInterceptor implements MethodInterceptor {
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
-        // 过滤不支持的redis方法
-        if( UN_SUPPORT_METHODS.contains( invocation.getMethod().getName() ) ){
-            return null ;
-        }
-
         // 1. 获取熔断对象实例
         AppRedisCircuitBreaker appRedisCircuitBreaker = AppRedisCircuitBreaker.getInstance( host ) ;
 
@@ -66,7 +52,6 @@ public class AppRedisConnectionMethodInterceptor implements MethodInterceptor {
 
             // 只对redis的执行的命令进行拦截，不拦截一般逻辑方法
             if( REDIS_CMD_METHODS.contains( invocation.getMethod().getName() ) ){
-//                log.error( "redis主机:{} 中命令 {} 执行成功" , host , invocation.getMethod().getName() ) ;
                 appRedisCircuitBreaker.clearSuccessiveFailureCount() ;
             }
 

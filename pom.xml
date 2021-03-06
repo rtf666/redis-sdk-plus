@@ -4,15 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.0.5.RELEASE</version>
-    </parent>
-
-    <groupId>com.rtf</groupId>
+    <groupId>com.github.rtf666</groupId>
     <artifactId>redis-sdk-plus</artifactId>
-    <version>1.0</version>
+    <version>1.0.4</version>
+
+    <name>redis-sdk-plus</name>
+    <description>redis-sdk-plus</description>
+    <url>https://github.com/rtf666/redis-sdk-plus</url>
 
     <properties>
         <java.version>1.8</java.version>
@@ -57,6 +55,7 @@
             <version>2.9.9</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
@@ -65,6 +64,24 @@
         </dependency>
 
     </dependencies>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>liupeng</name>
+            <email>895876294@qq.com</email>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>https://github.com/rtf666/redis-sdk-plus.git</connection>
+        <url>https://github.com/rtf666/redis-sdk-plus</url>
+    </scm>
 
     <build>
         <pluginManagement>
@@ -122,5 +139,16 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>oss</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>oss</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/releases/</url>
+        </repository>
+    </distributionManagement>
 
 </project>

@@ -1,10 +1,13 @@
 package com.rtf.redis.client;
 
+import com.rtf.redis.client.interceptor.AppCodisConnectionMethodInterceptor;
+import com.rtf.redis.client.interceptor.AppRedisConnectionMethodInterceptor;
 import com.rtf.redis.client.lb.AppRedisCircuitBreaker;
 import com.rtf.redis.client.lb.AppRedisHealthStats;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.data.redis.connection.RedisClusterConfiguration;
@@ -21,7 +24,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
  * @Modified By
  */
 @Slf4j
-public class AppCodisConnectionFactory extends LettuceConnectionFactory {
+public class AppRedisConnectionFactory extends LettuceConnectionFactory {
 
     private AppRedisHealthStats appRedisHealthStats ;
 
@@ -33,9 +36,14 @@ public class AppCodisConnectionFactory extends LettuceConnectionFactory {
     @Getter
     private boolean master = true ;
 
-    public AppCodisConnectionFactory(RedisStandaloneConfiguration standaloneConfig,
+    @Setter
+    @Getter
+    private String redisServerType = "redis" ;
+
+    public AppRedisConnectionFactory(String redisServerType , RedisStandaloneConfiguration standaloneConfig,
                                      LettuceClientConfiguration clientConfig) {
         super( standaloneConfig , clientConfig ) ;
+        this.redisServerType = redisServerType ;
     }
 
     @Override
@@ -60,12 +68,12 @@ public class AppCodisConnectionFactory extends LettuceConnectionFactory {
         }
     }
 
-    public AppCodisConnectionFactory(RedisSentinelConfiguration sentinelConfiguration,
+    public AppRedisConnectionFactory(RedisSentinelConfiguration sentinelConfiguration,
                                      LettuceClientConfiguration clientConfig) {
         throw new RuntimeException("not support RedisSentinelConfiguration") ;
     }
 
-    public AppCodisConnectionFactory(RedisClusterConfiguration clusterConfiguration,
+    public AppRedisConnectionFactory(RedisClusterConfiguration clusterConfiguration,
                                      LettuceClientConfiguration clientConfig) {
         throw new RuntimeException("not support RedisClusterConfiguration") ;
     }
@@ -94,7 +102,8 @@ public class AppCodisConnectionFactory extends LettuceConnectionFactory {
         proxyFactory.setInterfaces( RedisConnection.class ) ;
         proxyFactory.setProxyTargetClass( true ) ;
         // 设置目标拦截器
-        proxyFactory.addAdvice( new AppRedisConnectionMethodInterceptor( getHostName() ) ) ;
+        proxyFactory.addAdvice( StringUtils.equalsIgnoreCase(redisServerType , "codis") ?
+                new AppCodisConnectionMethodInterceptor( getHostName() ) : new AppRedisConnectionMethodInterceptor( getHostName() ) ) ;
 
         return (RedisConnection)proxyFactory.getProxy() ;
     }

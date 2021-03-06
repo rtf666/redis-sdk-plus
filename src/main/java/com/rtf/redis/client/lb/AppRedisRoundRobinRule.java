@@ -1,6 +1,6 @@
 package com.rtf.redis.client.lb;
 
-import com.rtf.redis.client.AppCodisConnectionFactory;
+import com.rtf.redis.client.AppRedisConnectionFactory;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,15 +20,15 @@ public class AppRedisRoundRobinRule {
     /**
      * redis连接工厂最大选择次数
      */
-    private static Integer maxSelectCount = 10 ;
+    private static Integer MAX_SELECT_COUNT = 5 ;
 
-    private List<AppCodisConnectionFactory> connectionFactories = Lists.newArrayList() ;
+    private List<AppRedisConnectionFactory> connectionFactories = Lists.newArrayList() ;
 
     private AtomicInteger nextMasterCyclicCounter ;
 
     private AtomicInteger nextSlaveCyclicCounter;
 
-    public AppRedisRoundRobinRule( List<AppCodisConnectionFactory> connectionFactories ){
+    public AppRedisRoundRobinRule( List<AppRedisConnectionFactory> connectionFactories ){
         this.connectionFactories = connectionFactories ;
 
         nextMasterCyclicCounter = new AtomicInteger(0) ;
@@ -41,9 +41,9 @@ public class AppRedisRoundRobinRule {
      * @param key
      * @return
      */
-    public AppCodisConnectionFactory choose(Object key) {
+    public AppRedisConnectionFactory choose(Object key) {
         // 1. 选择主节点
-        AppCodisConnectionFactory connectionFactory = choose( key , true ) ;
+        AppRedisConnectionFactory connectionFactory = choose( key , true ) ;
 
         // 2. 选择从节点
         if( connectionFactory == null ){
@@ -58,21 +58,21 @@ public class AppRedisRoundRobinRule {
      * @param key
      * @return
      */
-    public AppCodisConnectionFactory choose(Object key , boolean useMaster) {
+    public AppRedisConnectionFactory choose(Object key , boolean useMaster) {
         if (connectionFactories == null || connectionFactories.size()<0) {
             log.warn("无可用的redis连接池供选择,useMaster={}, {}" , useMaster , key);
             return null;
         }
 
         // 筛选指定类型的连接工厂
-        List<AppCodisConnectionFactory> targetConnectionFactories = connectionFactories.stream()
+        List<AppRedisConnectionFactory> targetConnectionFactories = connectionFactories.stream()
                 .filter( item -> useMaster ? item.isMaster() : !item.isMaster() )
                 .collect(Collectors.toList()) ;
 
-        AppCodisConnectionFactory connectionFactory = null ;
+        AppRedisConnectionFactory connectionFactory = null ;
         int count = 0 ;
         // 未找到连接工厂并且选取次数小于10
-        while ( connectionFactory==null && count++ < maxSelectCount && targetConnectionFactories.size()>0 ){
+        while ( connectionFactory==null && count++ < MAX_SELECT_COUNT && targetConnectionFactories.size()>0 ){
             int nextServerIndex = incrementAndGetModulo( useMaster ? nextMasterCyclicCounter : nextSlaveCyclicCounter ,
                     targetConnectionFactories.size() ) ;
             try{
@@ -80,18 +80,13 @@ public class AppRedisRoundRobinRule {
                 //检查连接池是否熔断
                 AppRedisCircuitBreaker appRedisCircuitBreaker = AppRedisCircuitBreaker.getInstance( connectionFactory.getHostName() ) ;
                 if( appRedisCircuitBreaker.isCircuitBreakerTripped() ){
-                    log.info("redis主机:{}处于熔断状态" , connectionFactory.getHostName()) ;
+                    log.debug("redis主机:{}处于熔断状态" , connectionFactory.getHostName()); ;
                     connectionFactory = null ;
                     continue;
                 }
             }catch( Exception e ){
                 log.error( "选取redis连接工厂异常 : {}" , e.getMessage() ) ;
             }
-        }
-
-        // 判断筛选次数是否超过阈值
-        if (count >= maxSelectCount) {
-            log.warn("redis连接工厂选择次数超过"+maxSelectCount+"次");
         }
 
         return connectionFactory ;

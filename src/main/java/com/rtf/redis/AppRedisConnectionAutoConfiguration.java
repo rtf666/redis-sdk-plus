@@ -1,6 +1,6 @@
 package com.rtf.redis;
 
-import com.rtf.redis.client.AppCodisConnectionFactory;
+import com.rtf.redis.client.AppRedisConnectionFactory;
 import com.rtf.redis.client.AppRedisConnectionConfigurationAdaptor;
 import com.rtf.redis.client.AppRedisDynamicConnectionFactory;
 import com.rtf.redis.client.lb.AppRedisHostList;
@@ -10,6 +10,7 @@ import io.lettuce.core.resource.Delay;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.data.redis.LettuceClientConfigurationBuilderCustomizer;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.context.annotation.Bean;
@@ -40,6 +41,10 @@ public class AppRedisConnectionAutoConfiguration extends AppRedisConnectionConfi
 	private static final Integer DEFAULT_CONNECTION_TIMEOUT = 5 ;
 
 	private final RedisProperties properties;
+
+	// 客户端类型
+	@Value("${spring.redis.type:redis}")
+	private String type = "redis" ;
 
 	private final List<LettuceClientConfigurationBuilderCustomizer> builderCustomizers;
 
@@ -89,12 +94,13 @@ public class AppRedisConnectionAutoConfiguration extends AppRedisConnectionConfi
 
 		RedisConnectionFactory redisConnectionFactory = null ;
 
-		if( properties.getHost().indexOf(",") != -1 ){
-			redisConnectionFactory = new AppRedisDynamicConnectionFactory( properties ,
+		// 使用","和";"进行检查，负载均衡和主备切换使用单独的连接库
+		if( properties.getHost().indexOf(",") != -1 || properties.getHost().indexOf(";") != -1 ){
+			redisConnectionFactory = new AppRedisDynamicConnectionFactory( type , properties ,
 					clientConfiguration ,
 					appRedisHostList ) ;
 		}else{
-			redisConnectionFactory = new AppCodisConnectionFactory( getStandaloneConfig(),
+			redisConnectionFactory = new AppRedisConnectionFactory( type , getStandaloneConfig(),
 					clientConfiguration) ;
 		}
 

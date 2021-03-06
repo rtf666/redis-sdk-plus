@@ -1,6 +1,6 @@
 package com.rtf.redis.client.lb;
 
-import com.rtf.redis.client.AppCodisConnectionFactory;
+import com.rtf.redis.client.AppRedisConnectionFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -28,7 +28,7 @@ public class AppRedisHealthStats {
 //        HEALTH_STATS_EXECUTOR = new ScheduledThreadPoolExecutor( coreSize , factory );
 //    }
 
-    private AppCodisConnectionFactory connectionFactory ;
+    private AppRedisConnectionFactory connectionFactory ;
 
 //    private InetUtils.HostInfo hostInfo ;
 
@@ -38,7 +38,7 @@ public class AppRedisHealthStats {
 
     private ScheduledFuture scheduledFuture = null ;
 
-    public AppRedisHealthStats( AppCodisConnectionFactory connectionFactory ){
+    public AppRedisHealthStats( AppRedisConnectionFactory connectionFactory ){
         this.connectionFactory = connectionFactory ;
 //        // 获取
 //        hostInfo = UtilIp.getHostInfo() ;
