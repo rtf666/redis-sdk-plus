@@ -27,13 +27,15 @@ spring:
     port: 6380
     host: 172.18.223.230,172.18.223.231;172.18.223.231
     password: 123456
+    type: redis
 ```
 * 主备节点。使用“;”区分主备节点，主节点都连接不上时，自动切换至备节点。
 * 负载均衡节点。redis主节点可以配置多个，不同的入口节点使用“,”分隔。
 * 所有节点的密码、端口必须相同。
+* type: 选择服务端redis集群类型，非必填，可选值：redis、codis，默认为redis。设置为codis则在客户端拦截codis不支持的命令。
 
 ### 问题反馈
-
+* [点击反馈问题](https://blog.csdn.net/lp895876294/article/details/114461393)
 
 ### 感谢
 * [codis](https://github.com/CodisLabs/codis)
