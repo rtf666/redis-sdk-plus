@@ -11,6 +11,7 @@
 ![architecture](doc/arc.png)
 
 ### maven依赖
+使用maven中央仓库，项目引入如下。
 ```
 <dependency>
     <groupId>com.github.rtf666</groupId>
